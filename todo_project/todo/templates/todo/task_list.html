@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ToDo Tasks</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <style>
+        /* Custom Colors and Styles */
+        body {
+            background-color: #f8f9fa; /* Soft grey background */
+        }
+        .welcome-section {
+            background-color: #e3f2fd; /* Light blue background */
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .btn:hover {
+            opacity: 0.9; /* Slight hover effect on buttons */
+        }
+        .list-group-item {
+            background-color: #ffffff; /* White background for tasks */
+            border: 1px solid #dee2e6;
+        }
+        .list-group-item:hover {
+            background-color: #f1f3f5; /* Light grey hover effect */
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <!-- Welcome Section -->
+        <div class="welcome-section text-center mb-4">
+             {% csrf_token %}
+            <p class="lead"><h1>Hello, {{ request.user.first_name|default:user.username }}!</h1></p>
+            <small class="text-muted">Welcome back to your ToDo App.</small>
+            <!--p class="lead">Stay organized and track your tasks easily.</p--->
+        </div>
+
+        <!-- Add Task Button -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>Your Tasks</h2>
+            <a href="{% url 'task_create' %}" class="btn btn-success">+ Add New Task</a>
+        </div>
+
+        <!-- Tasks List -->
+        <ul class="list-group shadow-sm">
+            {% for task in tasks %}
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+                <!-- Task Title and Status -->
+                <div>
+                    <h5 class="mb-0">{{ task.title }}</h5>
+                    <small class="text-muted">
+                        {% if task.completed %}
+                        <span class="badge bg-success">Completed</span>
+                        {% else %}
+                        <span class="badge bg-warning">Pending</span>
+                        {% endif %}
+                    </small>
+                </div>
+
+                <!-- Action Buttons -->
+                <div>
+                    <a href="{% url 'task_update' task.pk %}" class="btn btn-sm btn-warning me-2">Update</a>
+                    <a href="{% url 'task_delete' task.pk %}" class="btn btn-sm btn-danger">Delete</a>
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+
+        <!-- Empty State Message -->
+        {% if not tasks %}
+        <div class="alert alert-info text-center mt-4" role="alert">
+            No tasks yet! Start by adding a new task.
+        </div>
+        {% endif %}
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ygrcaKbYXeb43DN+s7USQlpt1nbjHDqVQwRfhtbFYzC/DKtOsnVO8Q1Ubp1fwOkd" crossorigin="anonymous"></script>
+</body>
+</html>
