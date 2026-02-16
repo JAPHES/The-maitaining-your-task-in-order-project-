@@ -24,7 +24,7 @@ def login_view(request):
         user = authenticate(request, username=username, password=password)
         if user is not None:
             login(request, user)
-            return redirect("todo")  # Ensure "home" corresponds to a valid URL name
+            return redirect("task_list")
         else:
             messages.error(request, "Invalid username or password.")
     return render(request, 'accounts/login.html')
@@ -34,7 +34,7 @@ def login_view(request):
 # else we allow user to see the message
 @login_required
 def home_view(request):
-    return render(request, 'todo/task_list.html')
+    return redirect("task_list")
 
 def logout_view(request):
     logout(request)
