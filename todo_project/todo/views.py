@@ -13,7 +13,7 @@ from .forms import TaskForm
 def task_list(request):
     # all records in the database
     # rows : represent the object / columns
-    tasks = Task.objects.all()
+    tasks = Task.objects.filter(owner=request.user)
     return render(request, 'todo/task_list.html', {'tasks': tasks})
 
 @login_required
@@ -22,7 +22,9 @@ def task_create(request):
     if request.method == "POST":
         form = TaskForm(request.POST)
         if form.is_valid():
-            form.save()
+            task = form.save(commit=False)
+            task.owner = request.user
+            task.save()
             return redirect('task_list')
 
     else:
@@ -31,7 +33,7 @@ def task_create(request):
 
 @login_required
 def task_delete(request, pk):
-    task = get_object_or_404(Task, pk=pk)
+    task = get_object_or_404(Task, pk=pk, owner=request.user)
     if request.method == "POST":
         task.delete()
         return redirect('task_list')
@@ -39,7 +41,7 @@ def task_delete(request, pk):
 
 @login_required
 def task_update(request, pk):
-    task = get_object_or_404(Task, pk=pk)
+    task = get_object_or_404(Task, pk=pk, owner=request.user)
     if request.method == "POST":
         form = TaskForm(request.POST, instance=task)
         if form.is_valid():

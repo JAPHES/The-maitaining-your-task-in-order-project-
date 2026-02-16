@@ -1,4 +1,5 @@
 from django.db import models
+from django.conf import settings
 
 # Create your models here.
 # THIS step should create a table task in our db where the attributes
@@ -6,6 +7,13 @@ from django.db import models
 
 class Task(models.Model):
     # attributes
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='tasks',
+        null=True,
+        blank=True
+    )
     title = models.CharField(max_length=100)
     completed = models.BooleanField(default=False)
 
