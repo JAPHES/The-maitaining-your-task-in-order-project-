@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Statistics</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <style>
+        :root {
+            --bg-main: #f2f6fb;
+            --panel-bg: #ffffff;
+            --line: #dbe5f1;
+            --text-main: #1f2937;
+            --text-subtle: #64748b;
+        }
+        body.dark-mode {
+            --bg-main: #0f172a;
+            --panel-bg: #1e293b;
+            --line: #334155;
+            --text-main: #e2e8f0;
+            --text-subtle: #9fb0c6;
+        }
+        body {
+            background: linear-gradient(135deg, #e5f1ff 0%, var(--bg-main) 52%);
+            color: var(--text-main);
+            min-height: 100vh;
+        }
+        .panel {
+            background: var(--panel-bg);
+            border: 1px solid var(--line);
+            border-radius: 16px;
+            box-shadow: 0 16px 38px rgba(15, 23, 42, 0.09);
+        }
+        .metric-value {
+            font-weight: 700;
+            font-size: 2rem;
+            line-height: 1;
+        }
+        .metric-label {
+            color: var(--text-subtle);
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container py-4">
+        <div class="panel p-4 mb-4">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+                <div>
+                    <h1 class="h3 mb-1">Weekly / Monthly Statistics</h1>
+                    <p class="mb-0 text-secondary">Track task completion trends and category usage.</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <button id="darkModeToggle" class="btn btn-outline-secondary btn-sm">Toggle Dark Mode</button>
+                    <a href="{% url 'task_calendar' %}" class="btn btn-outline-primary btn-sm">Calendar</a>
+                    <a href="{% url 'task_list' %}" class="btn btn-primary btn-sm">Back To Tasks</a>
+                    <a href="{% url 'logout' %}" class="btn btn-danger btn-sm">Log Out</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-3 mb-4">
+            <div class="col-12 col-md-4">
+                <div class="panel p-3 p-md-4">
+                    <div class="metric-label">Completed (Last 7 Days)</div>
+                    <div class="metric-value text-success">{{ weekly_completed }}</div>
+                </div>
+            </div>
+            <div class="col-12 col-md-4">
+                <div class="panel p-3 p-md-4">
+                    <div class="metric-label">Completed (This Month)</div>
+                    <div class="metric-value text-primary">{{ monthly_completed }}</div>
+                </div>
+            </div>
+            <div class="col-12 col-md-4">
+                <div class="panel p-3 p-md-4">
+                    <div class="metric-label">Most Used Category</div>
+                    <div class="metric-value text-warning-emphasis">{{ most_used_category }}</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-3">
+            <div class="col-12 col-lg-6">
+                <div class="panel p-3 p-md-4">
+                    <h2 class="h5 mb-3">Weekly Completed Tasks</h2>
+                    <canvas id="weeklyChart" height="220"></canvas>
+                </div>
+            </div>
+            <div class="col-12 col-lg-6">
+                <div class="panel p-3 p-md-4">
+                    <h2 class="h5 mb-3">Monthly Completed Tasks (6 months)</h2>
+                    <canvas id="monthlyChart" height="220"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{ weekly_labels|json_script:"weekly-labels-data" }}
+    {{ weekly_values|json_script:"weekly-values-data" }}
+    {{ monthly_labels|json_script:"monthly-labels-data" }}
+    {{ monthly_values|json_script:"monthly-values-data" }}
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script>
+        (function () {
+            var key = "todo_dark_mode";
+            var toggle = document.getElementById("darkModeToggle");
+            if (localStorage.getItem(key) === "true") {
+                document.body.classList.add("dark-mode");
+            }
+            toggle.addEventListener("click", function () {
+                document.body.classList.toggle("dark-mode");
+                localStorage.setItem(key, document.body.classList.contains("dark-mode"));
+            });
+        })();
+
+        const weeklyLabels = JSON.parse(document.getElementById('weekly-labels-data').textContent);
+        const weeklyValues = JSON.parse(document.getElementById('weekly-values-data').textContent);
+        const monthlyLabels = JSON.parse(document.getElementById('monthly-labels-data').textContent);
+        const monthlyValues = JSON.parse(document.getElementById('monthly-values-data').textContent);
+
+        new Chart(document.getElementById('weeklyChart'), {
+            type: 'bar',
+            data: {
+                labels: weeklyLabels,
+                datasets: [{
+                    label: 'Completed Tasks',
+                    data: weeklyValues,
+                    backgroundColor: '#16a34a',
+                    borderRadius: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+            }
+        });
+
+        new Chart(document.getElementById('monthlyChart'), {
+            type: 'line',
+            data: {
+                labels: monthlyLabels,
+                datasets: [{
+                    label: 'Completed Tasks',
+                    data: monthlyValues,
+                    borderColor: '#0ea5e9',
+                    backgroundColor: 'rgba(14, 165, 233, 0.2)',
+                    fill: true,
+                    tension: 0.35,
+                    pointRadius: 4,
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+            }
+        });
+    </script>
+</body>
+</html>

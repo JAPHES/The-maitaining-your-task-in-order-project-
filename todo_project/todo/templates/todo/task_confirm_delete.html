@@ -12,15 +12,15 @@
         <div class="card shadow-sm mx-auto" style="max-width: 600px;">
             <div class="card-body">
                 <!-- Title -->
-                <h1 class="text-danger text-center mb-4">Delete Task</h1>
+                <h1 class="text-danger text-center mb-4">Move Task To Trash</h1>
                 <p class="text-center fs-5">
-                    Are you sure you want to delete <strong>"{{ task.title }}"</strong>?
+                    This will move <strong>"{{ task.title }}"</strong> to trash. You can restore it later.
                 </p>
                 <!-- Form and Buttons -->
                 <div class="text-center mt-4">
                     <form method="POST" class="d-inline">
                         {% csrf_token %}
-                        <button type="submit" class="btn btn-danger px-4">Yes, Delete Task</button>
+                        <button type="submit" class="btn btn-danger px-4">Move To Trash</button>
                     </form>
                     <a href="{% url 'task_list' %}" class="btn btn-secondary px-4 ms-2">Cancel</a>
                 </div>

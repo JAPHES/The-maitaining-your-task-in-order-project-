@@ -129,7 +129,7 @@
                             <div class="form-side">
                                 <h2>Create Account</h2>
                                 <p class="form-intro">Sign up to start organizing your tasks.</p>
-                                <form method="POST" action="">
+                                <form method="POST" action="{% url 'register' %}">
                                     {% csrf_token %}
                                     <div class="mb-2">
                                         {{ form.as_p }}
@@ -141,7 +141,7 @@
                                 <div class="text-center mt-3">
                                     <p class="mb-0">
                                         Already have an account?
-                                        <a href="/login" class="text-link text-decoration-none fw-semibold">Login Here</a>
+                                        <a href="{% url 'login' %}" class="text-link text-decoration-none fw-semibold">Login Here</a>
                                     </p>
                                 </div>
                             </div>
