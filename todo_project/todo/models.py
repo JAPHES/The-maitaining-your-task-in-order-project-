@@ -60,6 +60,32 @@ class Task(models.Model):
             self.completed_at = None
         super().save(*args, **kwargs)
 
+
+class TaskNote(models.Model):
+    task = models.ForeignKey(Task, on_delete=models.CASCADE, related_name='notes')
+    content = models.TextField(blank=True)
+    attachment = models.FileField(upload_to='task_notes/', null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"Note for {self.task.title}"
+
+
+class TaskResource(models.Model):
+    task = models.ForeignKey(Task, on_delete=models.CASCADE, related_name='resources')
+    title = models.CharField(max_length=150)
+    url = models.URLField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"Resource for {self.task.title}: {self.title}"
+
 class Book(models.Model):
     title = models.CharField(max_length=1200,unique=True)
     author = models.CharField(max_length=100)

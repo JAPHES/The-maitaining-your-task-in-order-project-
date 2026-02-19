@@ -65,21 +65,19 @@
     </style>
 </head>
 <body>
-    <div class="container py-4">
+    <div class="container-fluid py-3">
+        <div class="row g-3">
+            <aside class="col-12 col-lg-3 col-xl-2">
+                {% include 'todo/_sidebar.html' %}
+            </aside>
+            <main class="col-12 col-lg-9 col-xl-10">
         <div class="panel p-4 mb-4">
             <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
                 <div>
                     <h1 class="h3 mb-1">Hello, {{ request.user.first_name|default:user.username }}</h1>
                     <p class="subtle mb-0">Organize tasks by priority, due date, and status.</p>
                 </div>
-                <div class="d-flex gap-2">
-                    <button id="darkModeToggle" class="btn btn-outline-secondary btn-sm">Toggle Dark Mode</button>
-                    <a href="{% url 'task_calendar' %}" class="btn btn-outline-primary btn-sm">Calendar</a>
-                    <a href="{% url 'task_statistics' %}" class="btn btn-outline-info btn-sm">Statistics</a>
-                    <a href="{% url 'task_create' %}" class="btn btn-primary btn-sm">+ New Task</a>
-                    <a href="{% url 'task_trash' %}" class="btn btn-outline-danger btn-sm">Trash</a>
-                    <a href="{% url 'logout' %}" class="btn btn-danger btn-sm">Log Out</a>
-                </div>
+                <a href="{% url 'task_create' %}" class="btn btn-primary btn-sm">+ New Task</a>
             </div>
         </div>
 
@@ -143,49 +141,53 @@
         </div>
 
         <div class="panel p-3">
-            {% for task in tasks %}
-            <div class="task-item p-3 {% if task.due_date and task.due_date < today and not task.completed %}overdue{% endif %}">
-                <div class="row g-3 align-items-start">
-                    <div class="col-12 col-lg-8">
-                        <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
-                            <h5 class="mb-0">{{ task.title }}</h5>
-                            {% if task.is_pinned %}
-                            <span class="badge text-bg-primary">Pinned</span>
-                            {% endif %}
-                            {% if task.completed %}
-                            <span class="badge text-bg-success">Completed</span>
-                            {% else %}
-                            <span class="badge text-bg-warning">Pending</span>
-                            {% endif %}
-                            <span class="badge text-bg-info">{{ task.get_category_display }}</span>
-                            {% if task.priority == 'high' %}
-                            <span class="badge text-bg-danger">High</span>
-                            {% elif task.priority == 'medium' %}
-                            <span class="badge text-bg-warning">Medium</span>
-                            {% else %}
-                            <span class="badge text-bg-secondary">Low</span>
-                            {% endif %}
-                            {% if task.due_date and task.due_date < today and not task.completed %}
-                            <span class="badge text-bg-danger">Overdue</span>
-                            {% endif %}
+            <div class="row g-3">
+                {% for task in tasks %}
+                <div class="col-12 col-md-6 col-xl-4">
+                    <div class="task-item p-3 h-100 d-flex flex-column justify-content-between {% if task.due_date and task.due_date < today and not task.completed %}overdue{% endif %}">
+                        <div>
+                            <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
+                                <h5 class="mb-0">{{ task.title }}</h5>
+                                {% if task.is_pinned %}
+                                <span class="badge text-bg-primary">Pinned</span>
+                                {% endif %}
+                                {% if task.completed %}
+                                <span class="badge text-bg-success">Completed</span>
+                                {% else %}
+                                <span class="badge text-bg-warning">Pending</span>
+                                {% endif %}
+                                <span class="badge text-bg-info">{{ task.get_category_display }}</span>
+                                {% if task.priority == 'high' %}
+                                <span class="badge text-bg-danger">High</span>
+                                {% elif task.priority == 'medium' %}
+                                <span class="badge text-bg-warning">Medium</span>
+                                {% else %}
+                                <span class="badge text-bg-secondary">Low</span>
+                                {% endif %}
+                                {% if task.due_date and task.due_date < today and not task.completed %}
+                                <span class="badge text-bg-danger">Overdue</span>
+                                {% endif %}
+                            </div>
+                            <div class="subtle small mb-3">
+                                Start: {{ task.start_date|date:"M d, Y" }} {{ task.start_time|time:"H:i" }}<br>
+                                End: {{ task.end_date|date:"M d, Y" }} {{ task.end_time|time:"H:i" }}<br>
+                                Due: {{ task.due_date|date:"M d, Y" }}
+                            </div>
                         </div>
-                        <div class="subtle small">
-                            Start: {{ task.start_date|date:"M d, Y" }} {{ task.start_time|time:"H:i" }} |
-                            End: {{ task.end_date|date:"M d, Y" }} {{ task.end_time|time:"H:i" }} |
-                            Due: {{ task.due_date|date:"M d, Y" }}
-                        </div>
-                    </div>
-                    <div class="col-12 col-lg-4">
-                        <div class="d-flex justify-content-lg-end gap-2 flex-wrap">
+                        <div class="d-flex justify-content-end gap-2 flex-wrap mt-auto">
                             <a href="{% url 'task_update' task.pk %}" class="btn btn-sm btn-outline-primary">Edit</a>
                             <a href="{% url 'task_delete' task.pk %}" class="btn btn-sm btn-outline-danger">Trash</a>
                         </div>
                     </div>
                 </div>
+                {% empty %}
+                <div class="col-12">
+                    <div class="alert alert-info mb-0">No tasks for this filter.</div>
+                </div>
+                {% endfor %}
             </div>
-            {% empty %}
-            <div class="alert alert-info mb-0">No tasks for this filter.</div>
-            {% endfor %}
+        </div>
+            </main>
         </div>
     </div>
 

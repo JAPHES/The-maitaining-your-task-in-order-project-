@@ -1,0 +1,30 @@
+<div class="panel p-3 h-100">
+    <div class="d-flex align-items-center gap-2 mb-3">
+        {% if request.user.profile_image %}
+        <img src="{{ request.user.profile_image.url }}" alt="Profile" style="width:42px;height:42px;border-radius:50%;object-fit:cover;border:2px solid #d3dbe7;">
+        {% else %}
+        <div style="width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#0ea5e9;color:#fff;font-weight:700;">
+            {{ request.user.username|slice:":1"|upper }}
+        </div>
+        {% endif %}
+        <div>
+            <div class="small fw-semibold">{{ request.user.username }}</div>
+            <a href="{% url 'profile' %}" class="small text-decoration-none">Edit Profile</a>
+        </div>
+    </div>
+    <h2 class="h6 mb-3 text-uppercase">Navigation</h2>
+    <div class="list-group mb-3">
+        <a href="{% url 'task_list' %}" class="list-group-item list-group-item-action {% if request.resolver_match.url_name == 'task_list' %}active{% endif %}">Tasks</a>
+        <a href="{% url 'task_calendar' %}" class="list-group-item list-group-item-action {% if request.resolver_match.url_name == 'task_calendar' %}active{% endif %}">Calendar</a>
+        <a href="{% url 'task_statistics' %}" class="list-group-item list-group-item-action {% if request.resolver_match.url_name == 'task_statistics' %}active{% endif %}">Statistics</a>
+        <a href="{% url 'task_trash' %}" class="list-group-item list-group-item-action {% if request.resolver_match.url_name == 'task_trash' %}active{% endif %}">Trash</a>
+        <a href="{% url 'task_create' %}" class="list-group-item list-group-item-action {% if request.resolver_match.url_name == 'task_create' %}active{% endif %}">New Task</a>
+    </div>
+    <div class="d-grid gap-2">
+        <button id="darkModeToggle" type="button" class="btn btn-outline-secondary btn-sm">Toggle Dark Mode</button>
+        <form method="post" action="{% url 'logout' %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger btn-sm w-100">Log Out</button>
+        </form>
+    </div>
+</div>

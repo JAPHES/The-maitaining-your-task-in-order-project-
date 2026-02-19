@@ -11,7 +11,11 @@ from datetime import timedelta
 ## a method to list our tasks
 ## a method to create the task
 from .models import Task
+from .models import TaskNote
+from .models import TaskResource
 from .forms import TaskForm
+from .forms import TaskNoteForm
+from .forms import TaskResourceForm
 
 
 def _ordered_tasks(queryset):
@@ -88,7 +92,13 @@ def task_create(request):
 
     else:
         form = TaskForm()
-    return render(request, 'todo/task_form.html', {'form': form})
+    return render(request, 'todo/task_form.html', {
+        'form': form,
+        'note_form': TaskNoteForm(),
+        'resource_form': TaskResourceForm(),
+        'notes': [],
+        'resources': [],
+    })
 
 @login_required
 def task_delete(request, pk):
@@ -109,7 +119,16 @@ def task_update(request, pk):
             return redirect('task_list')
     else:
             form = TaskForm(instance=task)
-    return render(request, 'todo/task_form.html', {'form':form})
+    note_form = TaskNoteForm()
+    resource_form = TaskResourceForm()
+    return render(request, 'todo/task_form.html', {
+        'form': form,
+        'task': task,
+        'note_form': note_form,
+        'resource_form': resource_form,
+        'notes': task.notes.all(),
+        'resources': task.resources.all(),
+    })
 
 @login_required
 def todo_view(request):
@@ -242,3 +261,45 @@ def calendar_view(request):
     return render(request, 'todo/task_calendar.html', {
         'calendar_events': events,
     })
+
+
+@login_required
+def task_note_add(request, pk):
+    task = get_object_or_404(Task, pk=pk, owner=request.user, is_deleted=False)
+    if request.method == "POST":
+        form = TaskNoteForm(request.POST, request.FILES)
+        if form.is_valid():
+            note = form.save(commit=False)
+            note.task = task
+            note.save()
+    return redirect('task_update', pk=task.pk)
+
+
+@login_required
+def task_note_delete(request, pk, note_id):
+    task = get_object_or_404(Task, pk=pk, owner=request.user, is_deleted=False)
+    note = get_object_or_404(TaskNote, pk=note_id, task=task)
+    if request.method == "POST":
+        note.delete()
+    return redirect('task_update', pk=task.pk)
+
+
+@login_required
+def task_resource_add(request, pk):
+    task = get_object_or_404(Task, pk=pk, owner=request.user, is_deleted=False)
+    if request.method == "POST":
+        form = TaskResourceForm(request.POST)
+        if form.is_valid():
+            resource = form.save(commit=False)
+            resource.task = task
+            resource.save()
+    return redirect('task_update', pk=task.pk)
+
+
+@login_required
+def task_resource_delete(request, pk, resource_id):
+    task = get_object_or_404(Task, pk=pk, owner=request.user, is_deleted=False)
+    resource = get_object_or_404(TaskResource, pk=resource_id, task=task)
+    if request.method == "POST":
+        resource.delete()
+    return redirect('task_update', pk=task.pk)

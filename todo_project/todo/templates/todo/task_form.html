@@ -30,19 +30,18 @@
     </style>
 </head>
 <body>
-    <div class="container py-4">
+    <div class="container-fluid py-3">
+        <div class="row g-3">
+            <aside class="col-12 col-lg-3 col-xl-2">
+                {% include 'todo/_sidebar.html' %}
+            </aside>
+            <main class="col-12 col-lg-9 col-xl-10">
         <div class="d-flex justify-content-between align-items-center mb-3">
             <h1 class="h3 mb-0">{% if form.instance.pk %}Edit Task{% else %}Add Task{% endif %}</h1>
-            <div class="d-flex gap-2">
-                <button id="darkModeToggle" type="button" class="btn btn-outline-secondary btn-sm">Toggle Dark Mode</button>
-                <a href="{% url 'task_calendar' %}" class="btn btn-outline-primary btn-sm">Calendar</a>
-                <a href="{% url 'task_statistics' %}" class="btn btn-outline-info btn-sm">Statistics</a>
-                <a href="{% url 'logout' %}" class="btn btn-danger btn-sm">Log Out</a>
-            </div>
         </div>
 
         <div class="panel shadow-sm mx-auto p-3 p-md-4" style="max-width: 900px;">
-                <form method="post" class="row g-3">
+                <form id="task-main-form" method="post" class="row g-3">
                     {% csrf_token %}
                     <div class="col-12">
                         <label class="form-label">Title</label>
@@ -99,11 +98,113 @@
                         <div class="alert alert-danger mb-0">{{ form.non_field_errors }}</div>
                     </div>
                     {% endif %}
-                    <div class="col-12 d-flex justify-content-between mt-2">
-                        <button type="submit" class="btn btn-primary px-4">Save</button>
-                        <a href="{% url 'task_list' %}" class="btn btn-secondary px-4">Back to Task List</a>
-                    </div>
                 </form>
+        </div>
+
+        <div class="panel shadow-sm mx-auto p-3 p-md-4 mt-4" style="max-width: 900px;">
+            <h2 class="h5 mb-3">Task Notes</h2>
+            {% if form.instance.pk %}
+            <form method="post" action="{% url 'task_note_add' form.instance.pk %}" enctype="multipart/form-data" class="mb-3">
+                {% csrf_token %}
+                <div class="mb-2">
+                    {{ note_form.content }}
+                    {{ note_form.content.errors }}
+                </div>
+                <div class="mb-2">
+                    <label class="form-label">Attachment (optional)</label>
+                    {{ note_form.attachment }}
+                    {{ note_form.attachment.errors }}
+                </div>
+                <button type="submit" class="btn btn-outline-primary btn-sm">Add Note</button>
+            </form>
+            {% else %}
+            <div class="alert alert-secondary mb-3">Save this task first, then you can add notes and attachments.</div>
+            <form class="mb-3">
+                <div class="mb-2">
+                    {{ note_form.content }}
+                </div>
+                <div class="mb-2">
+                    <label class="form-label">Attachment (optional)</label>
+                    {{ note_form.attachment }}
+                </div>
+                <button type="button" class="btn btn-outline-primary btn-sm" disabled>Add Note</button>
+            </form>
+            {% endif %}
+
+            {% for note in notes %}
+            <div class="border rounded p-3 mb-2">
+                <div class="small text-muted mb-1">{{ note.created_at|date:"M d, Y H:i" }}</div>
+                <div class="mb-2">{{ note.content }}</div>
+                {% if note.attachment %}
+                <div class="mb-2">
+                    <a href="{{ note.attachment.url }}" target="_blank" rel="noopener noreferrer">Open attached file</a>
+                </div>
+                {% endif %}
+                <form method="post" action="{% url 'task_note_delete' form.instance.pk note.id %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-outline-danger btn-sm">Delete Note</button>
+                </form>
+            </div>
+            {% empty %}
+            <div class="alert alert-info mb-0">No notes yet for this task.</div>
+            {% endfor %}
+        </div>
+
+        <div class="panel shadow-sm mx-auto p-3 p-md-4 mt-4" style="max-width: 900px;">
+            <h2 class="h5 mb-3">Learning Resources</h2>
+            {% if form.instance.pk %}
+            <form method="post" action="{% url 'task_resource_add' form.instance.pk %}" class="row g-2 mb-3">
+                {% csrf_token %}
+                <div class="col-12 col-md-5">
+                    {{ resource_form.title }}
+                    {{ resource_form.title.errors }}
+                </div>
+                <div class="col-12 col-md-5">
+                    {{ resource_form.url }}
+                    {{ resource_form.url.errors }}
+                </div>
+                <div class="col-12 col-md-2 d-grid">
+                    <button type="submit" class="btn btn-outline-primary">Add Link</button>
+                </div>
+            </form>
+            {% else %}
+            <div class="alert alert-secondary mb-3">Save this task first, then you can add resource links.</div>
+            <form class="row g-2 mb-3">
+                <div class="col-12 col-md-5">
+                    {{ resource_form.title }}
+                </div>
+                <div class="col-12 col-md-5">
+                    {{ resource_form.url }}
+                </div>
+                <div class="col-12 col-md-2 d-grid">
+                    <button type="button" class="btn btn-outline-primary" disabled>Add Link</button>
+                </div>
+            </form>
+            {% endif %}
+
+            {% for resource in resources %}
+            <div class="border rounded p-3 mb-2 d-flex flex-wrap justify-content-between align-items-center gap-2">
+                <div>
+                    <div class="fw-semibold">{{ resource.title }}</div>
+                    <a href="{{ resource.url }}" target="_blank" rel="noopener noreferrer">{{ resource.url }}</a>
+                </div>
+                <form method="post" action="{% url 'task_resource_delete' form.instance.pk resource.id %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-outline-danger btn-sm">Delete Link</button>
+                </form>
+            </div>
+            {% empty %}
+            <div class="alert alert-info mb-0">No resources yet for this task.</div>
+            {% endfor %}
+        </div>
+
+        <div class="panel shadow-sm mx-auto p-3 mt-4" style="max-width: 900px;">
+            <div class="d-flex justify-content-between">
+                <button type="submit" form="task-main-form" class="btn btn-primary px-4">Save</button>
+                <a href="{% url 'task_list' %}" class="btn btn-secondary px-4">Back to Task List</a>
+            </div>
+        </div>
+            </main>
         </div>
     </div>
 

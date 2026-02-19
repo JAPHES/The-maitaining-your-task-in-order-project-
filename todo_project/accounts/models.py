@@ -8,5 +8,6 @@ class CustomUser(AbstractUser):
 
     # here you can add any custom fields if necessary
     bio = models.TextField(null=True, blank=True)
+    profile_image = models.FileField(upload_to='profile_images/', null=True, blank=True)
 
 
