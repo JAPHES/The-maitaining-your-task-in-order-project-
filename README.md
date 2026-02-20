@@ -1,67 +1,112 @@
 # To-Do App
 
-The To-Do App is a task management system built with Django that allows users to create, update, and track their daily tasks. Users can mark tasks as **done** or **pending** to stay organized and improve productivity.
+A Django task management app with authentication, scheduling fields, progress tracking, soft delete (trash), and a responsive UI.
 
 ## Features
-- **Add Tasks**: Create tasks with a title and description.
-- **Update Task Status**: Mark tasks as **done** or **pending**.
-- **View Tasks**: See a list of all tasks and their current status.
-- **Delete Tasks**: Remove completed or unnecessary tasks.
+- User authentication (register/login).
+- Optional profile image upload and profile editing page.
+- Create, update, and manage personal tasks.
+- Task metadata:
+  - Category (`Personal`, `Work`, `Study`, `Health`, `Other`)
+  - Priority (`Low`, `Medium`, `High`)
+  - Start/End date and time
+  - Due date
+  - Pinned tasks
+- Task study/workspace extensions:
+  - Add multiple notes per task
+  - Attach files to notes (lecture handouts, PDFs, screenshots)
+  - Add multiple resource links per task (e.g., lecture materials)
+- Smart task listing:
+  - Soft-deleted tasks excluded by default
+  - Ordered by pinned first, then due date
+- Status filters:
+  - `All`
+  - `Done`
+  - `Pending`
+- Overdue indicator for pending tasks past due date.
+- Progress dashboard:
+  - Total tasks
+  - Completed tasks
+  - Pending tasks
+  - Completion percentage + progress bar
+- Statistics dashboard (`/statistics/`):
+  - Completed tasks in last 7 days
+  - Completed tasks in current month
+  - Most used category
+  - Weekly and monthly completion charts (Chart.js)
+- Calendar view (`/calendar/`) with FullCalendar:
+  - Displays due-date tasks on monthly/weekly/list views
+  - Color-codes completed vs pending tasks
+  - Click event opens task edit page
+- Bulk actions:
+  - Mark all completed
+  - Mark all pending
+  - Move completed tasks to trash
+- Trash system (soft delete):
+  - Restore one/all tasks
+  - Delete forever
+- Dark mode toggle (stored in `localStorage`).
+- Responsive Bootstrap layout for mobile and desktop.
 
-## Technologies Used
-- **Backend**: Django (Python)
-- **Frontend**: HTML, CSS, Bootstrap
-- **Database**: SQLite (or any preferred database)
+## Tech Stack
+- Backend: Django (Python)
+- Frontend: Django templates + Bootstrap 5
+- Database: SQLite (default)
 
-## Installation
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/JAPHES/todo-app.git
-   ```
-2. Navigate into the project directory:
-   ```bash
-   cd todo-app
-   ```
-3. Create a virtual environment and activate it:
-   ```bash
-   python -m venv env
-   source env/bin/activate  # On Windows use `env\Scripts\activate`
-   ```
-4. Install dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
-5. Apply database migrations:
-   ```bash
-   python manage.py migrate
-   ```
-6. Run the development server:
-   ```bash
-   python manage.py runserver
-   ```
+## Project Structure
+- Root: `ToDo/`
+- Django project folder: `ToDo/todo_project/`
+- Main app: `ToDo/todo_project/todo/`
+- Auth app: `ToDo/todo_project/accounts/`
+
+## Setup
+1. Clone repository.
+2. Open terminal in `ToDo/todo_project`.
+3. Create and activate virtual environment.
+4. Install dependencies.
+5. Run migrations.
+6. Start server.
+
+```bash
+python -m venv env
+# Windows
+env\Scripts\activate
+# Linux/macOS
+# source env/bin/activate
+
+pip install -r requirements.txt
+python manage.py migrate
+python manage.py runserver
+```
+
+## Security Hardening
+- Login throttling is enabled (temporary lock after repeated failed attempts).
+- Logout is POST-only with CSRF protection.
+- Upload validation is enforced:
+  - Profile image: allowed image extensions, max 5MB
+  - Note attachments: allowed document/image extensions, max 10MB
+- Secure defaults are configured in settings (`check --deploy` clean).
+
+Recommended environment variables for production:
+```bash
+DJANGO_SECRET_KEY=replace_with_long_random_secret
+DJANGO_DEBUG=False
+DJANGO_ALLOWED_HOSTS=yourdomain.com,www.yourdomain.com
+DJANGO_CSRF_TRUSTED_ORIGINS=https://yourdomain.com,https://www.yourdomain.com
+SECURE_HSTS_SECONDS=31536000
+```
 
 ## Usage
-1. Open your browser and go to `http://127.0.0.1:8000/`.
-2. Add new tasks using the task creation form.
-3. Update the status of tasks to **done** or **pending**.
-4. Delete tasks when they are no longer needed.
+1. Go to `http://127.0.0.1:8000/`.
+2. Register and login.
+3. Create tasks with category/priority/dates.
+4. Use filters and bulk actions on the dashboard.
+5. Move tasks to trash and restore when needed.
 
-## Contributing
-If you'd like to contribute:
-- Fork the repository.
-- Create a new branch (`git checkout -b feature-name`).
-- Make changes and commit them (`git commit -m "Add feature"`).
-- Push to the branch (`git push origin feature-name`).
-- Open a pull request.
+## Notes
+- `Delete` is soft delete (moves to trash).
+- Use the `Trash` page for restore or permanent delete.
+- Dark mode preference is saved in browser storage.
 
 ## License
-This project is open-source and available under the MIT License.
-
-## Contact
-For any inquiries or feedback, feel free to reach out:
-- Email: JAPHESMURITHI@GMAIL.COM 
-- GitHub: [JAPHES](https://github.com/JAPHES)
-
----
-Stay productive! ✅
-
+MIT
