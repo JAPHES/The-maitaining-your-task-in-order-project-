@@ -51,7 +51,7 @@ A Django task management app with authentication, scheduling fields, progress tr
 ## Tech Stack
 - Backend: Django (Python)
 - Frontend: Django templates + Bootstrap 5
-- Database: SQLite (default)
+- Database: SQLite (local default), PostgreSQL (production)
 
 ## Project Structure
 - Root: `ToDo/`
@@ -61,7 +61,7 @@ A Django task management app with authentication, scheduling fields, progress tr
 
 ## Setup
 1. Clone repository.
-2. Open terminal in `ToDo/todo_project`.
+2. Open terminal in `ToDo/`.
 3. Create and activate virtual environment.
 4. Install dependencies.
 5. Run migrations.
@@ -75,6 +75,7 @@ env\Scripts\activate
 # source env/bin/activate
 
 pip install -r requirements.txt
+cd todo_project
 python manage.py migrate
 python manage.py runserver
 ```
@@ -94,7 +95,30 @@ DJANGO_DEBUG=False
 DJANGO_ALLOWED_HOSTS=yourdomain.com,www.yourdomain.com
 DJANGO_CSRF_TRUSTED_ORIGINS=https://yourdomain.com,https://www.yourdomain.com
 SECURE_HSTS_SECONDS=31536000
+DATABASE_URL=postgres://...
 ```
+
+## Render Deployment (Free PostgreSQL)
+This repository is configured for Render deployment with:
+- `render.yaml` (Blueprint for web service + free PostgreSQL database)
+- `build.sh` (installs dependencies, runs `collectstatic`, runs migrations)
+- `gunicorn` app server
+- WhiteNoise static file serving
+- `DATABASE_URL` based PostgreSQL config
+
+### Deploy Steps
+1. Push this project to GitHub.
+2. In Render, click **New +** -> **Blueprint**.
+3. Select your repository (Render reads `render.yaml` automatically).
+4. Confirm creation of:
+   - Web service: `todo-app`
+   - PostgreSQL database: `todo-postgres` (free plan)
+5. Click **Apply** and wait for first deploy to complete.
+
+After deploy:
+- Run `python manage.py createsuperuser` from the Render Shell if you need admin access.
+- Media uploads are configured to use a Render persistent disk at `/var/data/media` and are served by Django in production (`DJANGO_SERVE_MEDIA_FILES=True`).
+- A persistent disk requires a paid Render web service plan (the blueprint uses `starter` for the web service). PostgreSQL remains on the free plan in this setup.
 
 ## Usage
 1. Go to `http://127.0.0.1:8000/`.
