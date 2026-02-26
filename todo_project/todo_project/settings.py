@@ -152,7 +152,8 @@ STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+MEDIA_ROOT = Path(os.getenv('DJANGO_MEDIA_ROOT', str(BASE_DIR / 'media')))
+SERVE_MEDIA_FILES = os.getenv('DJANGO_SERVE_MEDIA_FILES', 'False').lower() == 'true'
 
 # Security hardening
 SECURE_CONTENT_TYPE_NOSNIFF = True
