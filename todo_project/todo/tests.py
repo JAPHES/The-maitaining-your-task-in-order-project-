@@ -1,6 +1,9 @@
+from django.contrib.auth import get_user_model
 from django.test import TestCase
+from django.urls import reverse
 
 from .forms import TaskForm
+from .models import Task, TaskNote
 
 
 class TaskFormValidationTests(TestCase):
@@ -40,3 +43,35 @@ class TaskFormValidationTests(TestCase):
         form = TaskForm(data=self._base_data())
 
         self.assertTrue(form.is_valid())
+
+
+class TaskNotesViewTests(TestCase):
+    def setUp(self):
+        self.user = get_user_model().objects.create_user(
+            username='owner',
+            password='StrongPassword123!',
+        )
+        self.other_user = get_user_model().objects.create_user(
+            username='other',
+            password='StrongPassword123!',
+        )
+        self.task = Task.objects.create(
+            owner=self.user,
+            title='Read module notes',
+        )
+        TaskNote.objects.create(task=self.task, content='Remember to revise chapter 2.')
+
+    def test_owner_can_view_task_notes_page(self):
+        self.client.login(username='owner', password='StrongPassword123!')
+
+        response = self.client.get(reverse('task_notes_view', args=[self.task.pk]))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Remember to revise chapter 2.')
+
+    def test_non_owner_cannot_view_task_notes_page(self):
+        self.client.login(username='other', password='StrongPassword123!')
+
+        response = self.client.get(reverse('task_notes_view', args=[self.task.pk]))
+
+        self.assertEqual(response.status_code, 404)

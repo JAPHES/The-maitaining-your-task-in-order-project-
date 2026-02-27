@@ -42,7 +42,9 @@ def _task_stats(queryset):
 # method to list task
 @login_required
 def task_list(request):
-    tasks_queryset = Task.objects.filter(owner=request.user, is_deleted=False)
+    tasks_queryset = Task.objects.filter(owner=request.user, is_deleted=False).annotate(
+        notes_count=Count('notes')
+    )
     status = request.GET.get('status', 'all').lower()
 
     if status == 'completed':
@@ -77,6 +79,15 @@ def task_list(request):
         'status': status,
         'today': timezone.localdate(),
         **stats,
+    })
+
+
+@login_required
+def task_notes_view(request, pk):
+    task = get_object_or_404(Task, pk=pk, owner=request.user, is_deleted=False)
+    return render(request, 'todo/task_notes.html', {
+        'task': task,
+        'notes': task.notes.all(),
     })
 
 @login_required

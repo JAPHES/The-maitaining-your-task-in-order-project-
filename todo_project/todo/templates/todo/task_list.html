@@ -175,6 +175,9 @@
                             </div>
                         </div>
                         <div class="d-flex justify-content-end gap-2 flex-wrap mt-auto">
+                            <a href="{% url 'task_notes_view' task.pk %}" class="btn btn-sm btn-outline-secondary">
+                                View Notes ({{ task.notes_count }})
+                            </a>
                             <a href="{% url 'task_update' task.pk %}" class="btn btn-sm btn-outline-primary">Edit</a>
                             <a href="{% url 'task_delete' task.pk %}" class="btn btn-sm btn-outline-danger">Trash</a>
                         </div>
