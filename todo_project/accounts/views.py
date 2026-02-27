@@ -41,8 +41,13 @@ def register_view(request):
 
 def login_view(request):
     if request.method == "POST":
-        username = request.POST['username']
-        password = request.POST['password']
+        username = request.POST.get('username', '').strip()
+        password = request.POST.get('password', '')
+
+        if not username or not password:
+            messages.error(request, "Username and password are required.")
+            return render(request, 'accounts/login.html')
+
         ip_address = _get_client_ip(request)
         attempts_key, lock_key = _login_attempt_keys(username, ip_address)
 

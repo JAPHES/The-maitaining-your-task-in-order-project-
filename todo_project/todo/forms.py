@@ -42,6 +42,7 @@ class TaskForm(forms.ModelForm):
         end_date = cleaned_data.get('end_date')
         start_time = cleaned_data.get('start_time')
         end_time = cleaned_data.get('end_time')
+        due_date = cleaned_data.get('due_date')
 
         if start_date and end_date and end_date < start_date:
             self.add_error('end_date', 'End date must be on or after the start date.')
@@ -55,6 +56,12 @@ class TaskForm(forms.ModelForm):
             and end_time <= start_time
         ):
             self.add_error('end_time', 'End time must be after start time when start and end dates are the same.')
+
+        if due_date and start_date and due_date < start_date:
+            self.add_error('due_date', 'Due date cannot be earlier than the start date.')
+
+        if due_date and end_date and due_date < end_date:
+            self.add_error('due_date', 'Due date cannot be earlier than the end date.')
 
         return cleaned_data
 
