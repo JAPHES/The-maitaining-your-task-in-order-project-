@@ -7,10 +7,14 @@ from django.utils import timezone
 from django.views.decorators.http import require_POST
 from .forms import CustomUserCreationForm
 from .forms import CustomUserProfileForm
+from django.http import HttpResponse
 
 MAX_LOGIN_ATTEMPTS = 5
 LOGIN_LOCKOUT_SECONDS = 15 * 60
 
+
+def health(request):
+    return HttpResponse("OK")
 
 def _get_client_ip(request):
     forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
