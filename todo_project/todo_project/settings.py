@@ -9,14 +9,9 @@ https://docs.djangoproject.com/en/5.1/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.1/ref/settings/
 """
-
-import os
+import dj_database_url
 from pathlib import Path
-
-try:
-    import dj_database_url
-except ImportError:  # Allows local startup before installing production extras.
-    dj_database_url = None
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -92,9 +87,11 @@ WSGI_APPLICATION = 'todo_project.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
+# CORRECTED DATABASE CONFIGURATION
 DATABASE_URL = os.getenv('DATABASE_URL')
 
-if DATABASE_URL and dj_database_url is not None:
+if DATABASE_URL:
+    # Use environment variable if available (for production)
     DATABASES = {
         'default': dj_database_url.parse(
             DATABASE_URL,
@@ -103,6 +100,8 @@ if DATABASE_URL and dj_database_url is not None:
         )
     }
 else:
+    # Use local SQLite for development (or hardcoded PostgreSQL for testing)
+    # IMPORTANT: Remove the hardcoded PostgreSQL URL after testing!
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
