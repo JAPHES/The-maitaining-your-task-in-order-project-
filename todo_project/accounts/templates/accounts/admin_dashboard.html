@@ -101,16 +101,30 @@
         </div>
         <div class="card shadow-sm mt-3">
             <div class="card-body">
-                <h6 class="mb-2">Recent Users</h6>
-                {% for u in recent_10_users %}
                 <div class="d-flex justify-content-between align-items-center mb-2">
-                    <div>
-                        <div>{{ u.email }}</div>
-                        <small class="text-muted">{{ u.date_joined|date:"Y-m-d H:i" }}</small>
-                    </div>
-                    <span class="badge {% if u.is_active %}text-bg-success{% else %}text-bg-secondary{% endif %}">{{ u.task_count }} tasks</span>
+                    <h6 class="mb-0">Recent Users</h6>
+                    <a href="{% url 'admin_users' %}" class="btn btn-sm btn-outline-primary">View all</a>
                 </div>
-                {% empty %}<p class="text-muted">No recent users.</p>{% endfor %}
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle mb-0">
+                        <thead>
+                            <tr><th>Name</th><th>Email</th><th>Joined</th><th>Status</th><th>Tasks</th></tr>
+                        </thead>
+                        <tbody>
+                        {% for u in recent_10_users %}
+                            <tr>
+                                <td>{{ u.first_name|default:"" }} {{ u.last_name|default:"" }}</td>
+                                <td>{{ u.email }}</td>
+                                <td>{{ u.date_joined|date:"Y-m-d" }}</td>
+                                <td><span class="badge {% if u.is_active %}text-bg-success{% else %}text-bg-secondary{% endif %}">{{ u.is_active|yesno:"Active,Inactive" }}</span></td>
+                                <td>{{ u.task_count }}</td>
+                            </tr>
+                        {% empty %}
+                            <tr><td colspan="5" class="text-muted text-center">No recent users.</td></tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
         <div class="card shadow-sm mt-3">

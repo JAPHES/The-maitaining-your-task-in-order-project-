@@ -20,9 +20,10 @@ from django.conf import settings
 from django.conf.urls.static import static
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    # Custom admin dashboard & auth views (must come before Django admin to avoid routing collision)
     path('', include('accounts.urls')),
     path('todo/', include('todo.urls')),
+    path('admin/', admin.site.urls),
 
 ]
 

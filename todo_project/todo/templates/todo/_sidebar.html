@@ -1,7 +1,7 @@
 <div class="panel p-3 h-100">
     <div class="d-flex align-items-center gap-2 mb-3">
         {% if request.user.profile_pic %}
-        <img src="{{ request.user.profile_pic.url }}" alt="Profile" style="width:42px;height:42px;border-radius:50%;object-fit:cover;border:2px solid #d3dbe7;">
+        <img loading="lazy" src="{{ request.user.profile_pic.url }}" alt="Profile" style="width:42px;height:42px;border-radius:50%;object-fit:cover;border:2px solid #d3dbe7;">
         {% else %}
         <div style="width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#0ea5e9;color:#fff;font-weight:700;">
             {{ request.user.username|slice:":1"|upper }}

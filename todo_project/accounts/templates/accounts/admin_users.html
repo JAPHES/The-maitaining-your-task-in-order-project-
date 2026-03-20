@@ -68,7 +68,7 @@
                 <td>{{ u.id }}</td>
                 <td>
                     {% if u.profile_pic %}
-                        <img src="{{ u.profile_pic.url }}" alt="" class="rounded-circle" width="36" height="36">
+                        <img loading="lazy" src="{{ u.profile_pic.url }}" alt="" class="rounded-circle" width="36" height="36">
                     {% else %}
                         <div class="rounded-circle bg-secondary text-white text-center" style="width:36px;height:36px;line-height:36px;">{{ u.username|slice:":1"|upper }}</div>
                     {% endif %}
@@ -82,8 +82,10 @@
                     <small class="text-muted">{{ u.completed_count }} completed</small>
                 </td>
                 <td>
-                    {% with rate= u.completed_count|default:0|floatformat:0 %}
-                    <div class="progress" style="height:6px;"><div class="progress-bar bg-success" style="width: {{ rate }}%"></div></div>
+                    {% with rate=u.completed_count %}
+                    <div class="progress" style="height:6px;">
+                        <div class="progress-bar bg-success" style="width: {{ rate|default:0 }}%"></div>
+                    </div>
                     {% endwith %}
                 </td>
                 <td>
@@ -174,13 +176,15 @@ document.querySelectorAll('.toggle-user').forEach(btn => {
     });
 });
 
-const resetModal = new bootstrap.Modal(document.getElementById('resetPasswordModal'));
 document.querySelectorAll('.reset-pass').forEach(btn => {
     btn.addEventListener('click', () => {
-        postAction(`/admin/users/${btn.dataset.id}/reset-password/`, new FormData()).then(data => {
-            document.getElementById('generatedPassword').value = data.password;
-            resetModal.show();
-        });
+        if (!confirm('Are you sure you want to reset this user\\'s password?')) return;
+        postAction(`/admin/users/${btn.dataset.id}/reset-password/`, new FormData())
+            .then(data => {
+                const resetModal = new bootstrap.Modal(document.getElementById('resetPasswordModal'));
+                document.getElementById('generatedPassword').value = data.password;
+                resetModal.show();
+            });
     });
 });
 document.getElementById('copyPassword').addEventListener('click', () => {
