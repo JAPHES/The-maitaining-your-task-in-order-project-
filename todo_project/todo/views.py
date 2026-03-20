@@ -1,21 +1,12 @@
-from django.shortcuts  import render,redirect,get_object_or_404
-from django.contrib.auth.decorators import login_required
-from django.db.models import F
-from django.db.models import Count
-from django.db.models import Q
-from django.utils import timezone
 from datetime import timedelta
 
-# Create your views here.
-## a methods to list our tasks
-## a method to list our tasks
-## a method to create the task
-from .models import Task
-from .models import TaskNote
-from .models import TaskResource
-from .forms import TaskForm
-from .forms import TaskNoteForm
-from .forms import TaskResourceForm
+from django.contrib.auth.decorators import login_required
+from django.db.models import Count, F, Q
+from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
+
+from .forms import TaskForm, TaskNoteForm, TaskResourceForm
+from .models import TaskNote, TaskResource, Todo
 
 
 def _ordered_tasks(queryset):
@@ -28,7 +19,7 @@ def _ordered_tasks(queryset):
 
 def _task_stats(queryset):
     total = queryset.count()
-    completed = queryset.filter(completed=True).count()
+    completed = queryset.filter(is_completed=True).count()
     pending = total - completed
     percentage = int((completed / total) * 100) if total else 0
     return {
@@ -39,40 +30,39 @@ def _task_stats(queryset):
     }
 
 
-# method to list task
 @login_required
 def task_list(request):
-    tasks_queryset = Task.objects.filter(owner=request.user, is_deleted=False).annotate(
+    tasks_queryset = Todo.objects.filter(user=request.user, is_deleted=False).annotate(
         notes_count=Count('notes')
     )
     status = request.GET.get('status', 'all').lower()
 
     if status == 'completed':
-        tasks_queryset = tasks_queryset.filter(completed=True)
+        tasks_queryset = tasks_queryset.filter(is_completed=True)
     elif status == 'pending':
-        tasks_queryset = tasks_queryset.filter(completed=False)
+        tasks_queryset = tasks_queryset.filter(is_completed=False)
     else:
         status = 'all'
 
     if request.method == "POST":
         action = request.POST.get('action')
-        base_queryset = Task.objects.filter(owner=request.user, is_deleted=False)
+        base_queryset = Todo.objects.filter(user=request.user, is_deleted=False)
         if action == 'mark_all_completed':
-            base_queryset.filter(completed=False).update(
-                completed=True,
+            base_queryset.filter(is_completed=False).update(
+                is_completed=True,
                 completed_at=timezone.now(),
             )
         elif action == 'mark_all_pending':
-            base_queryset.filter(completed=True).update(
-                completed=False,
+            base_queryset.filter(is_completed=True).update(
+                is_completed=False,
                 completed_at=None,
             )
         elif action == 'trash_completed':
-            base_queryset.filter(completed=True).update(is_deleted=True)
+            base_queryset.filter(is_completed=True).update(is_deleted=True)
         return redirect(f"{request.path}?status={status}")
 
     tasks = _ordered_tasks(tasks_queryset)
-    stats = _task_stats(Task.objects.filter(owner=request.user, is_deleted=False))
+    stats = _task_stats(Todo.objects.filter(user=request.user, is_deleted=False))
 
     return render(request, 'todo/task_list.html', {
         'tasks': tasks,
@@ -84,23 +74,22 @@ def task_list(request):
 
 @login_required
 def task_notes_view(request, pk):
-    task = get_object_or_404(Task, pk=pk, owner=request.user, is_deleted=False)
+    task = get_object_or_404(Todo, pk=pk, user=request.user, is_deleted=False)
     return render(request, 'todo/task_notes.html', {
         'task': task,
         'notes': task.notes.all(),
     })
 
+
 @login_required
 def task_create(request):
-    #cover validity
     if request.method == "POST":
         form = TaskForm(request.POST)
         if form.is_valid():
             task = form.save(commit=False)
-            task.owner = request.user
+            task.user = request.user
             task.save()
             return redirect('task_list')
-
     else:
         form = TaskForm()
     return render(request, 'todo/task_form.html', {
@@ -111,25 +100,27 @@ def task_create(request):
         'resources': [],
     })
 
+
 @login_required
 def task_delete(request, pk):
-    task = get_object_or_404(Task, pk=pk, owner=request.user, is_deleted=False)
+    task = get_object_or_404(Todo, pk=pk, user=request.user, is_deleted=False)
     if request.method == "POST":
         task.is_deleted = True
         task.save(update_fields=['is_deleted'])
         return redirect('task_list')
-    return render(request, 'todo/task_confirm_delete.html',{'task': task})
+    return render(request, 'todo/task_confirm_delete.html', {'task': task})
+
 
 @login_required
 def task_update(request, pk):
-    task = get_object_or_404(Task, pk=pk, owner=request.user, is_deleted=False)
+    task = get_object_or_404(Todo, pk=pk, user=request.user, is_deleted=False)
     if request.method == "POST":
         form = TaskForm(request.POST, instance=task)
         if form.is_valid():
             form.save()
             return redirect('task_list')
     else:
-            form = TaskForm(instance=task)
+        form = TaskForm(instance=task)
     note_form = TaskNoteForm()
     resource_form = TaskResourceForm()
     return render(request, 'todo/task_form.html', {
@@ -141,6 +132,7 @@ def task_update(request, pk):
         'resources': task.resources.all(),
     })
 
+
 @login_required
 def todo_view(request):
     return redirect('task_list')
@@ -148,7 +140,7 @@ def todo_view(request):
 
 @login_required
 def task_trash(request):
-    trash_queryset = Task.objects.filter(owner=request.user, is_deleted=True)
+    trash_queryset = Todo.objects.filter(user=request.user, is_deleted=True)
 
     if request.method == "POST":
         action = request.POST.get('action')
@@ -159,15 +151,15 @@ def task_trash(request):
         elif action == 'empty_trash':
             trash_queryset.delete()
         elif action == 'restore_task' and task_id:
-            Task.objects.filter(
+            Todo.objects.filter(
                 pk=task_id,
-                owner=request.user,
+                user=request.user,
                 is_deleted=True,
             ).update(is_deleted=False)
         elif action == 'delete_forever' and task_id:
-            Task.objects.filter(
+            Todo.objects.filter(
                 pk=task_id,
-                owner=request.user,
+                user=request.user,
                 is_deleted=True,
             ).delete()
 
@@ -182,8 +174,8 @@ def stats_view(request):
     now = timezone.now()
     today = timezone.localdate()
 
-    base_queryset = Task.objects.filter(owner=request.user, is_deleted=False)
-    completed_queryset = base_queryset.filter(completed=True, completed_at__isnull=False)
+    base_queryset = Todo.objects.filter(user=request.user, is_deleted=False)
+    completed_queryset = base_queryset.filter(is_completed=True, completed_at__isnull=False)
 
     week_start = now - timedelta(days=7)
     weekly_completed = completed_queryset.filter(completed_at__gte=week_start).count()
@@ -201,7 +193,7 @@ def stats_view(request):
         .first()
     )
     most_used_category = (
-        dict(Task.CATEGORY_CHOICES).get(most_used_category_data['category'], 'N/A')
+        dict(Todo.CATEGORY_CHOICES).get(most_used_category_data['category'], 'N/A')
         if most_used_category_data else 'N/A'
     )
 
@@ -243,8 +235,8 @@ def stats_view(request):
 
 @login_required
 def calendar_view(request):
-    tasks = Task.objects.filter(
-        owner=request.user,
+    tasks = Todo.objects.filter(
+        user=request.user,
         is_deleted=False,
     ).filter(
         Q(start_date__isnull=False) | Q(due_date__isnull=False)
@@ -259,12 +251,12 @@ def calendar_view(request):
             'title': task.title,
             'start': event_start.isoformat(),
             'url': f"/todo/task/update/{task.pk}/",
-            'color': '#16a34a' if task.completed else '#0ea5e9',
+            'color': '#16a34a' if task.is_completed else '#0ea5e9',
             'textColor': '#ffffff',
             'extendedProps': {
                 'category': task.get_category_display(),
                 'priority': task.get_priority_display(),
-                'completed': task.completed,
+                'completed': task.is_completed,
                 'dueDate': task.due_date.isoformat() if task.due_date else None,
             }
         })
@@ -276,7 +268,7 @@ def calendar_view(request):
 
 @login_required
 def task_note_add(request, pk):
-    task = get_object_or_404(Task, pk=pk, owner=request.user, is_deleted=False)
+    task = get_object_or_404(Todo, pk=pk, user=request.user, is_deleted=False)
     if request.method == "POST":
         form = TaskNoteForm(request.POST, request.FILES)
         if form.is_valid():
@@ -288,7 +280,7 @@ def task_note_add(request, pk):
 
 @login_required
 def task_note_delete(request, pk, note_id):
-    task = get_object_or_404(Task, pk=pk, owner=request.user, is_deleted=False)
+    task = get_object_or_404(Todo, pk=pk, user=request.user, is_deleted=False)
     note = get_object_or_404(TaskNote, pk=note_id, task=task)
     if request.method == "POST":
         note.delete()
@@ -297,7 +289,7 @@ def task_note_delete(request, pk, note_id):
 
 @login_required
 def task_resource_add(request, pk):
-    task = get_object_or_404(Task, pk=pk, owner=request.user, is_deleted=False)
+    task = get_object_or_404(Todo, pk=pk, user=request.user, is_deleted=False)
     if request.method == "POST":
         form = TaskResourceForm(request.POST)
         if form.is_valid():
@@ -309,7 +301,7 @@ def task_resource_add(request, pk):
 
 @login_required
 def task_resource_delete(request, pk, resource_id):
-    task = get_object_or_404(Task, pk=pk, owner=request.user, is_deleted=False)
+    task = get_object_or_404(Todo, pk=pk, user=request.user, is_deleted=False)
     resource = get_object_or_404(TaskResource, pk=resource_id, task=task)
     if request.method == "POST":
         resource.delete()

@@ -1,21 +1,22 @@
 
 from django import forms
 from pathlib import Path
-from.models import Task, TaskNote, TaskResource
+from .models import Todo, TaskNote, TaskResource
 
 class TaskForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        text_like_fields = ['title', 'start_date', 'end_date', 'start_time', 'end_time', 'due_date']
+        text_like_fields = ['title', 'description', 'start_date', 'end_date', 'start_time', 'end_time', 'due_date']
         for field_name in text_like_fields:
             self.fields[field_name].widget.attrs.setdefault('class', 'form-control')
         self.fields['is_pinned'].widget.attrs.setdefault('class', 'form-check-input')
-        self.fields['completed'].widget.attrs.setdefault('class', 'form-check-input')
+        self.fields['is_completed'].widget.attrs.setdefault('class', 'form-check-input')
 
     class Meta:
-        model = Task
+        model = Todo
         fields = [
             'title',
+            'description',
             'category',
             'priority',
             'start_date',
@@ -24,7 +25,7 @@ class TaskForm(forms.ModelForm):
             'end_time',
             'due_date',
             'is_pinned',
-            'completed',
+            'is_completed',
         ]
         widgets = {
             'category': forms.Select(attrs={'class': 'form-select'}),
@@ -34,6 +35,7 @@ class TaskForm(forms.ModelForm):
             'start_time': forms.TimeInput(attrs={'type': 'time'}),
             'end_time': forms.TimeInput(attrs={'type': 'time'}),
             'due_date': forms.DateInput(attrs={'type': 'date'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
         }
 
     def clean(self):

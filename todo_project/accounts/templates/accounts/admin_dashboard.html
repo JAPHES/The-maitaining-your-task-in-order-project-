@@ -1,0 +1,178 @@
+{% extends "base.html" %}
+{% block title %}Admin Dashboard{% endblock %}
+{% block extra_css %}
+<style>
+    .card-icon { font-size: 1.6rem; }
+    .stat-card { min-height: 120px; }
+    .activity-item { border-bottom: 1px solid #e5e7eb; padding: .5rem 0; }
+    .badge-trim { letter-spacing: .02em; }
+</style>
+{% endblock %}
+{% block content %}
+<div class="row g-3">
+    <div class="col-12 col-lg-9">
+        <div class="row g-3">
+            <div class="col-6 col-lg-3"><div class="card shadow-sm stat-card"><div class="card-body"><div class="d-flex justify-content-between align-items-center"><span>Total Users</span><i class="fa fa-users card-icon text-primary"></i></div><h3 class="mt-2">{{ total_users }}</h3><small class="text-muted">Active {{ active_users }}</small></div></div></div>
+            <div class="col-6 col-lg-3"><div class="card shadow-sm stat-card"><div class="card-body"><div class="d-flex justify-content-between align-items-center"><span>New Today</span><i class="fa fa-user-plus card-icon text-success"></i></div><h3 class="mt-2">{{ new_users_today }}</h3><small class="text-muted">Users joined</small></div></div></div>
+            <div class="col-6 col-lg-3"><div class="card shadow-sm stat-card"><div class="card-body"><div class="d-flex justify-content-between align-items-center"><span>Total Tasks</span><i class="fa fa-list-check card-icon text-warning"></i></div><h3 class="mt-2">{{ total_tasks }}</h3><small class="text-muted">Completed {{ completed_tasks }}</small></div></div></div>
+            <div class="col-6 col-lg-3"><div class="card shadow-sm stat-card"><div class="card-body"><div class="d-flex justify-content-between align-items-center"><span>Completion</span><i class="fa fa-bullseye card-icon text-success"></i></div><h3 class="mt-2">{{ completion_rate_percentage }}%</h3><div class="progress"><div class="progress-bar bg-success" style="width: {{ completion_rate_percentage }}%"></div></div></div></div></div>
+            <div class="col-6 col-lg-3"><div class="card shadow-sm stat-card"><div class="card-body"><div class="d-flex justify-content-between align-items-center"><span>Pending</span><i class="fa fa-hourglass-half card-icon text-warning"></i></div><h3 class="mt-2">{{ pending_tasks }}</h3><small class="text-muted">Trash {{ trash_tasks }}</small></div></div></div>
+            <div class="col-6 col-lg-3"><div class="card shadow-sm stat-card"><div class="card-body"><div class="d-flex justify-content-between align-items-center"><span>Overdue</span><i class="fa fa-triangle-exclamation card-icon text-danger"></i></div><h3 class="mt-2 text-danger">{{ overdue_tasks }}</h3><small class="text-muted">Active {{ active_tasks }}</small></div></div></div>
+            <div class="col-6 col-lg-3"><div class="card shadow-sm stat-card"><div class="card-body"><div class="d-flex justify-content-between align-items-center"><span>Attachments</span><i class="fa fa-paperclip card-icon text-secondary"></i></div><h3 class="mt-2">{{ attachments_count }}</h3><small class="text-muted">Disk {{ disk_usage_bytes|filesizeformat }}</small></div></div></div>
+            <div class="col-6 col-lg-3"><div class="card shadow-sm stat-card"><div class="card-body"><div class="d-flex justify-content-between align-items-center"><span>Avg/User</span><i class="fa fa-chart-simple card-icon text-info"></i></div><h3 class="mt-2">{{ avg_tasks_per_user }}</h3><small class="text-muted">Tasks per user</small></div></div></div>
+        </div>
+        <div class="card shadow-sm mt-3">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Activity (7 days)</h5>
+                    <div class="btn-group">
+                        <a class="btn btn-outline-primary btn-sm" href="{% url 'admin_users' %}">Users</a>
+                        <a class="btn btn-outline-primary btn-sm" href="{% url 'admin_tasks' %}">Tasks</a>
+                    </div>
+                </div>
+                <canvas id="activityChart" height="110"></canvas>
+            </div>
+        </div>
+        <div class="row g-3 mt-1">
+            <div class="col-lg-6">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body">
+                        <h6>Category Distribution</h6>
+                        <canvas id="categoryChart" height="180"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body">
+                        <h6>Priority Mix</h6>
+                        <canvas id="priorityChart" height="180"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card shadow-sm mt-3">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h5 class="mb-0">Recent Tasks</h5>
+                    <a href="{% url 'admin_tasks' %}" class="btn btn-sm btn-outline-primary">View all</a>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover align-middle">
+                        <thead><tr><th>Title</th><th>User</th><th>Category</th><th>Priority</th><th>Due</th><th>Status</th></tr></thead>
+                        <tbody>
+                        {% for task in recent_10_tasks %}
+                        <tr>
+                            <td>{{ task.title }}</td>
+                            <td>{{ task.user.email }}</td>
+                            <td><span class="badge text-bg-info badge-trim">{{ task.get_category_display }}</span></td>
+                            <td><span class="badge text-bg-secondary badge-trim">{{ task.get_priority_display }}</span></td>
+                            <td>{{ task.due_date|date:"Y-m-d" }}</td>
+                            <td>
+                                {% if task.is_completed %}<span class="badge text-bg-success">Done</span>{% else %}<span class="badge text-bg-warning text-dark">Pending</span>{% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}<tr><td colspan="6" class="text-muted">No tasks yet.</td></tr>{% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-lg-3">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h6 class="mb-3">Top Users</h6>
+                {% for u in top_10_users %}
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <div>
+                        <div class="fw-semibold">{{ u.email }}</div>
+                        <small class="text-muted">{{ u.task_count }} tasks</small>
+                    </div>
+                    <div style="min-width:90px">
+                        <div class="progress" style="height:6px;">
+                            <div class="progress-bar bg-success" style="width: {{ u.completion_rate|floatformat:0 }}%"></div>
+                        </div>
+                        <small class="text-muted">{{ u.completed_count }} done</small>
+                    </div>
+                </div>
+                {% empty %}<p class="text-muted">No users.</p>{% endfor %}
+            </div>
+        </div>
+        <div class="card shadow-sm mt-3">
+            <div class="card-body">
+                <h6 class="mb-2">Recent Users</h6>
+                {% for u in recent_10_users %}
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <div>
+                        <div>{{ u.email }}</div>
+                        <small class="text-muted">{{ u.date_joined|date:"Y-m-d H:i" }}</small>
+                    </div>
+                    <span class="badge {% if u.is_active %}text-bg-success{% else %}text-bg-secondary{% endif %}">{{ u.task_count }} tasks</span>
+                </div>
+                {% empty %}<p class="text-muted">No recent users.</p>{% endfor %}
+            </div>
+        </div>
+        <div class="card shadow-sm mt-3">
+            <div class="card-body">
+                <h6 class="mb-2">Recent Activity</h6>
+                {% for item in recent_activity %}
+                <div class="activity-item">
+                    <div class="fw-semibold">{{ item.user }}</div>
+                    <small class="text-muted">{{ item.timestamp|date:"Y-m-d H:i" }} · {{ item.type }}</small>
+                </div>
+                {% empty %}<p class="text-muted">No activity yet.</p>{% endfor %}
+            </div>
+        </div>
+        <div class="card shadow-sm mt-3">
+            <div class="card-body">
+                <h6>System Health</h6>
+                <ul class="list-unstyled small mb-0">
+                    <li>Django {{ django_version }}</li>
+                    <li>Python {{ python_version }}</li>
+                    <li>DB: {{ database_status }}</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+const activityCtx = document.getElementById('activityChart');
+const labels = {{ last_7_days|safe }};
+const activityLabels = labels.map(x => x.date);
+const createdData = labels.map(x => x.created);
+const completedData = labels.map(x => x.completed);
+new Chart(activityCtx, {
+    type: 'line',
+    data: {
+        labels: activityLabels,
+        datasets: [
+            {label: 'Created', data: createdData, borderColor: '#0d6efd', backgroundColor: 'rgba(13,110,253,.2)', tension:.3},
+            {label: 'Completed', data: completedData, borderColor: '#198754', backgroundColor: 'rgba(25,135,84,.2)', tension:.3}
+        ]
+    },
+    options: {responsive:true, plugins:{legend:{display:true}}}
+});
+
+const categoryCtx = document.getElementById('categoryChart');
+const categoryData = {{ category_distribution|safe }};
+new Chart(categoryCtx, {
+    type: 'pie',
+    data: {
+        labels: categoryData.map(x => x.category),
+        datasets: [{data: categoryData.map(x => x.count), backgroundColor:['#0d6efd','#6610f2','#198754','#ffc107','#dc3545']}]
+    }
+});
+const priorityCtx = document.getElementById('priorityChart');
+const priorityData = {{ priority_distribution|safe }};
+new Chart(priorityCtx, {
+    type: 'doughnut',
+    data: {
+        labels: priorityData.map(x => x.priority),
+        datasets: [{data: priorityData.map(x => x.count), backgroundColor:['#198754','#ffc107','#dc3545']}]
+    }
+});
+</script>
+{% endblock %}

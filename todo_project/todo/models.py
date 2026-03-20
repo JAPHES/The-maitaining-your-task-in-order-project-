@@ -1,12 +1,9 @@
-from django.db import models
 from django.conf import settings
+from django.db import models
 from django.utils import timezone
 
-# Create your models here.
-# THIS step should create a table task in our db where the attributes
 
-
-class Task(models.Model):
+class Todo(models.Model):
     CATEGORY_PERSONAL = 'personal'
     CATEGORY_WORK = 'work'
     CATEGORY_STUDY = 'study'
@@ -29,40 +26,50 @@ class Task(models.Model):
         (PRIORITY_HIGH, 'High'),
     ]
 
-    # attributes
-    owner = models.ForeignKey(
+    user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name='tasks',
+        related_name='todos',
         null=True,
-        blank=True
+        blank=True,
     )
-    title = models.CharField(max_length=100)
+    title = models.CharField(max_length=255)
+    description = models.TextField(blank=True)
     category = models.CharField(max_length=20, choices=CATEGORY_CHOICES, default=CATEGORY_OTHER)
     priority = models.CharField(max_length=20, choices=PRIORITY_CHOICES, default=PRIORITY_MEDIUM)
-    start_date = models.DateField(null=True)
-    end_date = models.DateField(null=True)
+    start_date = models.DateField(null=True, blank=True)
+    end_date = models.DateField(null=True, blank=True)
     start_time = models.TimeField(null=True, blank=True)
     end_time = models.TimeField(null=True, blank=True)
     due_date = models.DateField(null=True, blank=True)
     is_pinned = models.BooleanField(default=False)
     is_deleted = models.BooleanField(default=False)
-    completed = models.BooleanField(default=False)
+    is_completed = models.BooleanField(default=False)
     completed_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
-    def __str__(self):
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self) -> str:  # pragma: no cover - trivial
         return self.title
 
+    @property
+    def completed(self):
+        """Backward compatibility for older templates/tests."""
+        return self.is_completed
+
     def save(self, *args, **kwargs):
-        if self.completed and not self.completed_at:
+        if self.is_completed and not self.completed_at:
             self.completed_at = timezone.now()
-        elif not self.completed:
+        elif not self.is_completed:
             self.completed_at = None
         super().save(*args, **kwargs)
 
 
 class TaskNote(models.Model):
-    task = models.ForeignKey(Task, on_delete=models.CASCADE, related_name='notes')
+    task = models.ForeignKey(Todo, on_delete=models.CASCADE, related_name='notes')
     content = models.TextField(blank=True)
     attachment = models.FileField(upload_to='task_notes/', null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -70,12 +77,12 @@ class TaskNote(models.Model):
     class Meta:
         ordering = ['-created_at']
 
-    def __str__(self):
+    def __str__(self) -> str:  # pragma: no cover - trivial
         return f"Note for {self.task.title}"
 
 
 class TaskResource(models.Model):
-    task = models.ForeignKey(Task, on_delete=models.CASCADE, related_name='resources')
+    task = models.ForeignKey(Todo, on_delete=models.CASCADE, related_name='resources')
     title = models.CharField(max_length=150)
     url = models.URLField()
     created_at = models.DateTimeField(auto_now_add=True)
@@ -83,13 +90,14 @@ class TaskResource(models.Model):
     class Meta:
         ordering = ['-created_at']
 
-    def __str__(self):
+    def __str__(self) -> str:  # pragma: no cover - trivial
         return f"Resource for {self.task.title}: {self.title}"
 
+
 class Book(models.Model):
-    title = models.CharField(max_length=1200,unique=True)
+    title = models.CharField(max_length=1200, unique=True)
     author = models.CharField(max_length=100)
     published_date = models.DateField()
 
-    def __str__(self):
+    def __str__(self) -> str:  # pragma: no cover - trivial
         return self.title

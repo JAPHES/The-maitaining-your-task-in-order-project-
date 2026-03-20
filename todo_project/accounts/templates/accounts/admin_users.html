@@ -1,0 +1,214 @@
+{% extends "base.html" %}
+{% block title %}Admin Users{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h4 class="mb-1">User Management</h4>
+        <small class="text-muted">Search, filter, and bulk manage users.</small>
+    </div>
+    <div class="btn-group">
+        <a href="{% url 'admin_export_users' %}" class="btn btn-outline-secondary btn-sm"><i class="fa fa-file-csv"></i> Export all</a>
+        <a href="{% url 'admin_dashboard' %}" class="btn btn-outline-primary btn-sm">Dashboard</a>
+    </div>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-6 col-md-3"><div class="card shadow-sm"><div class="card-body"><div class="text-muted">Total</div><div class="h4 mb-0">{{ total_users }}</div></div></div></div>
+    <div class="col-6 col-md-3"><div class="card shadow-sm"><div class="card-body"><div class="text-muted">Active</div><div class="h4 mb-0 text-success">{{ active_users }}</div></div></div></div>
+    <div class="col-6 col-md-3"><div class="card shadow-sm"><div class="card-body"><div class="text-muted">Inactive</div><div class="h4 mb-0 text-danger">{{ inactive_users }}</div></div></div></div>
+    <div class="col-6 col-md-3"><div class="card shadow-sm"><div class="card-body"><div class="text-muted">Zero Tasks</div><div class="h4 mb-0 text-warning">{{ users_with_zero_tasks }}</div></div></div></div>
+    </div>
+
+<form class="row gy-2 gx-2 align-items-end mb-3" method="get">
+    <div class="col-md-4">
+        <label class="form-label small">Search</label>
+        <input type="text" class="form-control" name="search" value="{{ search }}" placeholder="Email or username" id="userSearchInput">
+    </div>
+    <div class="col-md-3">
+        <label class="form-label small">Status</label>
+        <select class="form-select" name="status">
+            <option value="all" {% if status == 'all' %}selected{% endif %}>All</option>
+            <option value="active" {% if status == 'active' %}selected{% endif %}>Active</option>
+            <option value="inactive" {% if status == 'inactive' %}selected{% endif %}>Inactive</option>
+        </select>
+    </div>
+    <div class="col-md-3">
+        <button class="btn btn-primary w-100" type="submit"><i class="fa fa-search"></i> Apply</button>
+    </div>
+</form>
+
+<form method="post">
+    {% csrf_token %}
+    <div class="d-flex flex-wrap gap-2 mb-2">
+        <button name="action" value="activate" class="btn btn-sm btn-success">Activate</button>
+        <button name="action" value="deactivate" class="btn btn-sm btn-warning">Deactivate</button>
+        <button name="action" value="export" class="btn btn-sm btn-outline-secondary"><i class="fa fa-file-csv"></i> Export selected</button>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover table-striped align-middle">
+            <thead>
+            <tr>
+                <th><input type="checkbox" id="selectAllUsers"></th>
+                <th>ID</th>
+                <th>Avatar</th>
+                <th>Email</th>
+                <th>Username</th>
+                <th>Joined</th>
+                <th>Last Login</th>
+                <th>Tasks</th>
+                <th>Completion</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for u in page_obj %}
+            <tr>
+                <td><input type="checkbox" name="selected" value="{{ u.id }}" class="user-checkbox"></td>
+                <td>{{ u.id }}</td>
+                <td>
+                    {% if u.profile_pic %}
+                        <img src="{{ u.profile_pic.url }}" alt="" class="rounded-circle" width="36" height="36">
+                    {% else %}
+                        <div class="rounded-circle bg-secondary text-white text-center" style="width:36px;height:36px;line-height:36px;">{{ u.username|slice:":1"|upper }}</div>
+                    {% endif %}
+                </td>
+                <td>{{ u.email }}</td>
+                <td>{{ u.username }}</td>
+                <td>{{ u.date_joined|date:"Y-m-d" }}</td>
+                <td>{{ u.last_login|date:"Y-m-d H:i" }}</td>
+                <td>
+                    <div class="fw-semibold">{{ u.task_count }}</div>
+                    <small class="text-muted">{{ u.completed_count }} completed</small>
+                </td>
+                <td>
+                    {% with rate= u.completed_count|default:0|floatformat:0 %}
+                    <div class="progress" style="height:6px;"><div class="progress-bar bg-success" style="width: {{ rate }}%"></div></div>
+                    {% endwith %}
+                </td>
+                <td>
+                    <span class="badge {% if u.is_active %}text-bg-success{% else %}text-bg-secondary{% endif %}">{{ u.is_active|yesno:"Active,Inactive" }}</span>
+                </td>
+                <td class="text-nowrap">
+                    <a class="btn btn-outline-primary btn-sm" href="{% url 'admin_user_tasks' u.id %}"><i class="fa fa-eye"></i></a>
+                    <button type="button" class="btn btn-outline-warning btn-sm toggle-user" data-id="{{ u.id }}"><i class="fa fa-power-off"></i></button>
+                    <button type="button" class="btn btn-outline-info btn-sm reset-pass" data-id="{{ u.id }}"><i class="fa fa-key"></i></button>
+                    <button type="button" class="btn btn-outline-danger btn-sm delete-user" data-id="{{ u.id }}"><i class="fa fa-trash"></i></button>
+                </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="11" class="text-center text-muted">No users found.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</form>
+
+<nav aria-label="Pagination">
+    <ul class="pagination">
+        {% if page_obj.has_previous %}
+            <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}&search={{ search }}&status={{ status }}">Prev</a></li>
+        {% endif %}
+        <li class="page-item active"><span class="page-link">{{ page_obj.number }}/{{ page_obj.paginator.num_pages }}</span></li>
+        {% if page_obj.has_next %}
+            <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}&search={{ search }}&status={{ status }}">Next</a></li>
+        {% endif %}
+    </ul>
+</nav>
+
+<!-- Reset password modal -->
+<div class="modal fade" id="resetPasswordModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header"><h5 class="modal-title">Password reset</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+      <div class="modal-body">
+        <p class="mb-1">Generated password:</p>
+        <div class="input-group">
+            <input type="text" class="form-control" id="generatedPassword" readonly>
+            <button class="btn btn-outline-secondary" type="button" id="copyPassword"><i class="fa fa-copy"></i></button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Delete confirmation -->
+<div class="modal fade" id="deleteUserModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <form method="post" class="modal-content" id="deleteUserForm">
+      {% csrf_token %}
+      <div class="modal-header"><h5 class="modal-title">Delete user</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+      <div class="modal-body">
+        <p class="mb-2">Enter your password to confirm.</p>
+        <input type="password" class="form-control" name="confirm_password" required>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="submit" class="btn btn-danger">Delete</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% endblock %}
+{% block extra_js %}
+<script>
+const selectAllUsers = document.getElementById('selectAllUsers');
+const userCheckboxes = document.querySelectorAll('.user-checkbox');
+if (selectAllUsers) {
+    selectAllUsers.addEventListener('change', (e) => userCheckboxes.forEach(cb => cb.checked = e.target.checked));
+}
+
+const csrfToken = document.querySelector('input[name=csrfmiddlewaretoken]')?.value || '{{ csrf_token }}';
+function postAction(url, body) {
+    return fetch(url, {
+        method: 'POST',
+        headers: {'X-Requested-With': 'XMLHttpRequest', 'X-CSRFToken': csrfToken},
+        body: body,
+    }).then(r => r.json());
+}
+
+document.querySelectorAll('.toggle-user').forEach(btn => {
+    btn.addEventListener('click', () => {
+        postAction(`/admin/users/${btn.dataset.id}/toggle/`, new FormData()).then(() => location.reload());
+    });
+});
+
+const resetModal = new bootstrap.Modal(document.getElementById('resetPasswordModal'));
+document.querySelectorAll('.reset-pass').forEach(btn => {
+    btn.addEventListener('click', () => {
+        postAction(`/admin/users/${btn.dataset.id}/reset-password/`, new FormData()).then(data => {
+            document.getElementById('generatedPassword').value = data.password;
+            resetModal.show();
+        });
+    });
+});
+document.getElementById('copyPassword').addEventListener('click', () => {
+    const input = document.getElementById('generatedPassword');
+    input.select();
+    navigator.clipboard.writeText(input.value);
+});
+
+const deleteModal = new bootstrap.Modal(document.getElementById('deleteUserModal'));
+document.querySelectorAll('.delete-user').forEach(btn => {
+    btn.addEventListener('click', () => {
+        const form = document.getElementById('deleteUserForm');
+        form.action = `/admin/users/${btn.dataset.id}/delete/`;
+        deleteModal.show();
+    });
+});
+
+let searchTimer;
+const searchInput = document.getElementById('userSearchInput');
+if (searchInput) {
+    searchInput.addEventListener('input', () => {
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(() => {
+            const url = new URL(window.location.href);
+            url.searchParams.set('search', searchInput.value);
+            window.location = url.toString();
+        }, 400);
+    });
+}
+</script>
+{% endblock %}

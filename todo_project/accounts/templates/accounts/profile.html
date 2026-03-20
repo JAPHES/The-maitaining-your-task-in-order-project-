@@ -47,8 +47,8 @@
         <div class="card profile-card shadow-sm">
             <div class="card-body p-4">
                 <div class="d-flex align-items-center gap-3 mb-4">
-                    {% if request.user.profile_image %}
-                    <img src="{{ request.user.profile_image.url }}" alt="Profile image" class="avatar">
+                    {% if request.user.profile_pic %}
+                    <img src="{{ request.user.profile_pic.url }}" alt="Profile image" class="avatar">
                     {% else %}
                     <div class="avatar-fallback">{{ request.user.username|slice:":1"|upper }}</div>
                     {% endif %}
@@ -86,7 +86,7 @@
                     </div>
                     <div class="col-12">
                         <label class="form-label">Profile Image (optional)</label>
-                        {{ form.profile_image }}
+                        {{ form.profile_pic }}
                     </div>
                     <div class="col-12">
                         <button type="submit" class="btn btn-success">Save Profile</button>
